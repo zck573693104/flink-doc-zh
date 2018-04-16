@@ -1,6 +1,6 @@
 ---
-title: "Application Profiling"
-nav-parent_id: monitoring
+标题: "应用分析"
+nav-parent_id: monitoring 监控
 nav-pos: 15
 ---
 <!--
@@ -25,17 +25,17 @@ under the License.
 * ToC
 {:toc}
 
-## Overview of Custom Logging with Apache Flink
+## 自定义日志 Apache Flink 
 
-Each standalone JobManager, TaskManager, HistoryServer, and ZooKeeper daemon redirects `stdout` and `stderr` to a file
-with a `.out` filename suffix and writes internal logging to a file with a `.log` suffix. Java options configured by the
-user in `env.java.opts`, `env.java.opts.jobmanager`, and `env.java.opts.taskmanager` can likewise define log files with
-use of the script variable `FLINK_LOG_PREFIX` and by enclosing the options in double quotes for late evaluation. Log files
+每一个 standalone JobManager, TaskManager, HistoryServer, and ZooKeeper 守护程序重定向 `stdout` and `stderr` to a file
+with a `.out` filename suffix and writes 内部的 logging to a file with a `.log` suffix. 在java里面配置
+ `env.java.opts`, `env.java.opts.jobmanager`, and `env.java.opts.taskmanager` 同样可以定义日志文件
+使用这些变量 `FLINK_LOG_PREFIX` and by enclosing the options in 进行引导设置. Log files
 using `FLINK_LOG_PREFIX` are rotated along with the default `.out` and `.log` files.
 
-# Profiling with Java Flight Recorder
-
-Java Flight Recorder is a profiling and event collection framework built into the Oracle JDK.
+# java运行记录
+通过Oracle JDK来分析记录的 通过java收集数据，可以高效有效的分析并处理数据进行记录
+Java Flight Recorder  
 [Java Mission Control](http://www.oracle.com/technetwork/java/javaseproducts/mission-control/java-mission-control-1998576.html)
 is an advanced set of tools that enables efficient and detailed analysis of the extensive of data collected by Java
 Flight Recorder. Example configuration:
@@ -45,7 +45,8 @@ env.java.opts: "-XX:+UnlockCommercialFeatures -XX:+UnlockDiagnosticVMOptions -XX
 ~~~
 
 # Profiling with JITWatch
-
+日志分析可视化系统 java HotSpot 即时编译系统 用来检查内部关系，热加载，装配字节码。
+配置如下:
 [JITWatch](https://github.com/AdoptOpenJDK/jitwatch/wiki) is a log analyser and visualizer for the Java HotSpot JIT
 compiler used to inspect inlining decisions, hot methods, bytecode, and assembly. Example configuration:
 
