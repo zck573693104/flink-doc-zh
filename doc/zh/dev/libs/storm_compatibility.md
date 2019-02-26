@@ -48,7 +48,136 @@ Flink提供了一个与Storm兼容的API (' org.apache.flink.storm.api ')，它�
 - `NimbusClient` and `Client` 替代`FlinkClient`
 - `LocalCluster` 替代 `FlinkLocalCluster`
 为了将Storm topology 提交给Flink,在topology Storm *client代码中，用它们的Flink替换使用过的Storm类就足够了
+可以使用实际的运行时代码,ie, Spouts and Bolts,可以使用*unmodified*
+topology 是否在远程集群中执行,参数`nimbus.host` 和 `nimbus.thrift.port`，分别使用`jobmanger.rpc.address` 和 `jobmanger.rpc.port`，
+如果未指定参数，则从“flink-con .yaml”获取该值。
+<div class="codetabs" markdown="1">
+<div data-lang="java" markdown="1">
+~~~java
+TopologyBuilder builder = new TopologyBuilder(); // 构建Storm topology
 
+// 实际topology 能够像原来一样使用Spouts/Bolts
+builder.setSpout("source", new FileSpout(inputFilePath));
+builder.setBolt("tokenizer", new BoltTokenizer()).shuffleGrouping("source");
+builder.setBolt("counter", new BoltCounter()).fieldsGrouping("tokenizer", new Fields("word"));
+builder.setBolt("sink", new BoltFileSink(outputFilePath)).shuffleGrouping("counter");
 
+Config conf = new Config();
+if(runLocal) { // submit to test cluster
+	// replaces: LocalCluster cluster = new LocalCluster();
+	FlinkLocalCluster cluster = new FlinkLocalCluster();
+	cluster.submitTopology("WordCount", conf, FlinkTopology.createTopology(builder));
+} else { // submit to remote cluster
+	// optional
+	// conf.put(Config.NIMBUS_HOST, "remoteHost");
+	// conf.put(Config.NIMBUS_THRIFT_PORT, 6123);
+	// replaces: StormSubmitter.submitTopology(topologyId, conf, builder.createTopology());
+	FlinkSubmitter.submitTopology("WordCount", conf, FlinkTopology.createTopology(builder));
+}
+~~~
+</div>
+</div>
 
+# Flink Streaming 操作Storm
 
+作为替代方案, Spouts and Bolts 可以嵌入到stream.
+Storm 兼容性层为每个类提供一个包装器类, 就是 `SpoutWrapper` 和 `BoltWrapper` (`org.apache.flink.storm.wrappers`).
+
+默认情况下，两个包装器都会进行转换 Storm 输出 tuples 到 Flink's [Tuple]({{site.baseurl}}/dev/api_concepts.html#tuples-and-case-classes) types (ie, `Tuple0` to `Tuple25` according to the number of fields of the Storm tuples).
+对于单个字段输出Tuple，也可以转换为字段的数据类型 (eg, `String` instead of `Tuple1<String>`).
+
+因为 Flink 无法推断输出属于的 Storm 操作字段类型 , 需要手动指定输出类型。
+为了得到正确的结果`TypeInformation` object, 可以使用Flink's `TypeExtractor` 
+
+## 嵌入说明
+
+为了使用Flink source作为管道流, 使用 `StreamExecutionEnvironment.addSource(SourceFunction, TypeInformation)`.
+这个Spout object 的构造函数 `SpoutWrapper<OUT>` `addSource(...)`作为第一个参数.
+泛型类型声明 `OUT` 指定源输出流的类型.
+
+<div class="codetabs" markdown="1">
+<div data-lang="java" markdown="1">
+~~~java
+StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+// 流只有 `raw` 一个类型 (只有单个字段输出流)
+DataStream<String> rawInput = env.addSource(
+	new SpoutWrapper<String>(new FileSpout(localFilePath), new String[] { Utils.DEFAULT_STREAM_ID }), // emit default output stream as raw type
+	TypeExtractor.getForClass(String.class)); // 输出类型
+
+// 输出过程流
+[...]
+~~~
+</div>
+</div>
+如果一个Spout发出有限数量的元组，那么可以通过在构造函数中设置“numberOfInvocations”参数将“spoutrapper”配置为自动终止。
+这允许Flink程序在处理完所有数据后自动关闭。
+默认情况下，程序将一直运行，直到手动[取消]({{site.baseurl}}/ops/cli.html)。
+## 嵌入 Bolts
+为了使用Bolt作为Flink的操作符, 使用`DataStream.transform(String, TypeInformation, OneInputStreamOperator)`.
+Bolt使用`BoltWrapper<IN,OUT>`作为`transform(...)`的最后一个参数
+泛型类型声明“IN”和“OUT”分别指定操作符的输入流和输出流的类型。
+<div class="codetabs" markdown="1">
+<div data-lang="java" markdown="1">
+~~~java
+StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+DataStream<String> text = env.readTextFile(localFilePath);
+
+DataStream<Tuple2<String, Integer>> counts = text.transform(
+	"tokenizer", // 操作名
+	TypeExtractor.getForObject(new Tuple2<String, Integer>("", 0)), // 输出类型
+	new BoltWrapper<String, Tuple2<String, Integer>>(new BoltTokenizer())); // Bolt 操作
+
+// 做进一步处理
+[...]
+~~~
+</div>
+</div>
+
+### Embedded Bolts的命名属性访问 
+
+Bolts 通过名称访问输入元组字段(另外通过索引访问).
+要使用Bolts, 需要下面操作
+
+ 1. [POJO]({{site.baseurl}}/dev/api_concepts.html#pojos) 输入流或
+ 2. [Tuple]({{site.baseurl}}/dev/api_concepts.html#tuples-and-case-classes) 输入流并指定输入模式 (i.e. name-to-index-mapping)
+
+对于POJO输入类型，Flink通过反射访问字段。
+对于这种情况，Flink需要一个对应的公共成员变量或公共getter方法。
+例如，如果一个Bolt通过名称' sentence '访问一个字段(例如，' String s = input. getstringbyfield ("sentence"); ')，输入POJO类必须有一个成员变量' public String sentence; '或方法' public String getSentence(){…(注意驼峰的命名)。
+
+为了 `Tuple` 输入类型, 需要使用Storm的“Fields”类指定输入模式。
+对于这种情况，“BoltWrapper”的构造函数接受一个额外的参数: `new BoltWrapper<Tuple1<String>, ...>(..., new Fields("sentence"))`.
+输入类型 `Tuple1<String>` 和 `Fields("sentence")` 比较 `input.getStringByField("sentence")` is equivalent to `input.getString(0)`.
+
+看 [BoltTokenizerWordCountPojo](https://github.com/apache/flink/tree/master/flink-contrib/flink-storm-examples/src/main/java/org/apache/flink/storm/wordcount/BoltTokenizerWordCountPojo.java) and [BoltTokenizerWordCountWithNames](https://github.com/apache/flink/tree/master/flink-contrib/flink-storm-examples/src/main/java/org/apache/flink/storm/wordcount/BoltTokenizerWordCountWithNames.java) for examples.
+
+## 配置 Spouts 和 Bolts
+
+在Storm中，Spouts和Bolts可以配置一个全局分布的“Map”对象，该对象被赋予“LocalCluster”或“StormSubmitter”的“submitTopology(…)”方法。
+此“MAP”由Topology的用户提供，并作为参数转发到调用“sp .open(…)”和“Bolt.prepare(…)”。
+如果整个Topology使用FlinkTopologyBuilder等在Flink中执行，则不需要特别注意&ndash;它和storm一样有效。
+
+对于嵌入式使用，必须使用Flink的配置机制。
+全局配置可以通过“. getconfig (). setglobaljobparameters(…)”在“StreamExecutionEnvironment”中设置。
+Flink的常规“配置”类可用于配置Spouts 和 Bolts
+然而，' Configuration '不像Storm那样支持任意键数据类型(只允许' String '键)。
+因此，Flink还提供了“StormConfig”类，可以像原始的“Map”那样使用它来提供对Storm的完全兼容性。
+
+<div class="codetabs" markdown="1">
+<div data-lang="java" markdown="1">
+~~~java
+StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+StormConfig config = new StormConfig();
+// 设置配置值
+[...]
+
+// storm全局配置
+env.getConfig().setGlobalJobParameters(config);
+
+// 嵌入式汇编程序 Spouts and/or Bolts
+[...]
+~~~
+</div>
+</div>
