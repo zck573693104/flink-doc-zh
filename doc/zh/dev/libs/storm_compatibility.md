@@ -181,3 +181,75 @@ env.getConfig().setGlobalJobParameters(config);
 ~~~
 </div>
 </div>
+## 多个输出流
+Flink还可以处理多个Spouts and Bolts输出流的声明。
+使用flink执行完整的topology `FlinkTopologyBuilder` 等等., 不需要特别注意。它和storm一样有效。
+
+对于嵌入式使用，输出流将是数据类型的 `SplitStreamType<T>`必须使用分割`DataStream.split(...)` 和 `SplitStream.select(...)`.
+Flink已经为`.split(...)`提供预定义的输出选择器`StormStreamSelector<T>` 
+此外，包装器类型 `SplitStreamTuple<T>` 可以被移除`SplitStreamMapper<T>`.
+<div class="codetabs" markdown="1">
+<div data-lang="java" markdown="1">
+~~~java
+[...]
+//从Spout或Bolt获取数据流，它们声明两个输出流s1和s2，输出类型为SomeType
+DataStream<SplitStreamType<SomeType>> multiStream = ...
+
+SplitStream<SplitStreamType<SomeType>> splitStream = multiStream.split(new StormStreamSelector<SomeType>());
+
+// 使用SplitStreamMapper删除SplitStreamType以获得SomeType类型的数据流 
+DataStream<SomeType> s1 = splitStream.select("s1").map(new SplitStreamMapper<SomeType>()).returns(SomeType.class);
+DataStream<SomeType> s2 = splitStream.select("s2").map(new SplitStreamMapper<SomeType>()).returns(SomeType.class);
+
+// 对s1和s2做进一步的处理
+[...]
+~~~
+</div>
+</div>
+
+看 [SpoutSplitExample.java](https://github.com/apache/flink/tree/master/flink-contrib/flink-storm-examples/src/main/java/org/apache/flink/storm/split/SpoutSplitExample.java) for a full example.
+
+# Flink Extensions
+
+## Finite Spouts
+
+在Flink中，流源可以是有限的，即发出有限数量的记录，并在发出最后一条记录后停止。然而，喷口通常发出无限的流。
+这两种方法之间的桥梁是“FiniteSpout”接口，除了“IRichSpout”之外，它还包含一个“reachedEnd()”方法，用户可以在其中指定一个停止条件。
+用户可以通过实现这个接口来创建一个有限的喷口，而不是(或添加到)' IRichSpout '，并另外实现' reachedEnd() '方法。
+与配置为发出有限数量元组的“spoutrapper”不同，“FiniteSpout”接口允许实现更复杂的终止条件。
+
+虽然在Flink流程序中嵌入Spouts或将整个Storm拓扑提交给Flink时，并不需要使用有限的spout，但在某些情况下，它们可能会派上用场:
+
+*要实现这一点，Spout行为方式与有限Flink源相同，只需进行最小的修改
+*用户只想处理一个流一段时间;之后，喷口可以自动停止将文件读入流
+*供测试用
+
+一个有限Spout例子，只发出10秒的记录:
+
+<div class="codetabs" markdown="1">
+<div data-lang="java" markdown="1">
+~~~java
+public class TimedFiniteSpout extends BaseRichSpout implements FiniteSpout {
+	[...] // implement open(), nextTuple(), ...
+
+	private long starttime = System.currentTimeMillis();
+
+	public boolean reachedEnd() {
+		return System.currentTimeMillis() - starttime > 10000l;
+	}
+}
+~~~
+</div>
+</div>
+
+# storm兼容性的例子
+
+您可以在Maven模块中找到更多示例 `flink-storm-examples`.
+对于不同版本的WordCount 可以看 [README.md](https://github.com/apache/flink/tree/master/flink-contrib/flink-storm-examples/README.md).
+要运行这些示例，您需要组装一个正确的jar文件。
+`flink-storm-examples-{{ site.version }}.jar` is **no** 有效的用于作业执行的jar文件(它只是一个标准的maven工件).
+这里有几个jar是为了分别嵌入 Spout and Bolt, namely `WordCount-SpoutSource.jar` and `WordCount-BoltTokenizer.jar`, respectively.
+比较pom查看如何构建
+此外，还有一个关于整个storm topologies的例子 (`WordCount-StormTopology.jar`).
+您可以通过以下方式运行每个示例  `bin/flink run <jarname>.jar`.您可以通过以下方式运行eacc:在每个jar的清单文件中包含正确的入口点类
+{% top %}
