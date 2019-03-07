@@ -1,5 +1,5 @@
 ---
-title: "Gelly: Flink Graph API"
+title: "Gelly: Flink 图的 API"
 nav-id: graphs
 nav-show_overview: true
 nav-title: "Graphs: Gelly"
@@ -7,25 +7,22 @@ nav-parent_id: libs
 nav-pos: 3
 ---
 <!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
+这将授权给Apache软件基金会(ASF)
+或者更多贡献者许可协议。参见通知文件
+与此工作一起分发，以获取更多信息
+关于版权的所有权。ASF许可此文件
+在Apache许可下，2.0版
+“许可”);除非符合规定，否则您不能使用此文件
+的许可证。你可于
+http://www.apache.org/licenses/LICENSE-2.0
+除非适用法律要求或经书面同意，
+在授权下发布的软件是在
+无任何保证或条件
+善意的，明示的或暗示的。参见许可证
+管理权限和限制的特定语言
+根据许可证。我被TOC替换了
 -->
-
-Gelly is a Graph API for Flink. It contains a set of methods and utilities which aim to simplify the development of graph analysis applications in Flink. In Gelly, graphs can be transformed and modified using high-level functions similar to the ones provided by the batch processing API. Gelly provides methods to create, transform and modify graphs, as well as a library of graph algorithms.
+Gelly是Flink的图形API。它包含了一组旨在简化Flink中图形分析应用程序开发的方法和实用程序。在Gelly中，可以使用与批处理API提供的类似的高级函数转换和修改图。Gelly提供了创建、转换和修改图形的方法，以及图形算法库。
 
 {:#markdown-toc}
 * [Graph API](graph_api.html)
@@ -35,12 +32,11 @@ Gelly is a Graph API for Flink. It contains a set of methods and utilities which
 * [Graph Generators](graph_generators.html)
 * [Bipartite Graphs](bipartite_graph.html)
 
-Using Gelly
+使用 Gelly
 -----------
 
-Gelly is currently part of the *libraries* Maven project. All relevant classes are located in the *org.apache.flink.graph* package.
-
-Add the following dependency to your `pom.xml` to use Gelly.
+Gelly目前是*libraries* Maven项目的一部分。所有相关类都位于*org.apache.flink中。图*包。
+  将以下依赖项添加到您的“pom”。Gelly使用的xml。
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -63,35 +59,27 @@ Add the following dependency to your `pom.xml` to use Gelly.
 </div>
 </div>
 
-Note that Gelly is not part of the binary distribution. See [linking]({{ site.baseurl }}/dev/linking.html) for
-instructions on packaging Gelly libraries into Flink user programs.
 
-The remaining sections provide a description of available methods and present several examples of how to use Gelly and how to mix it with the Flink DataSet API.
-
-Running Gelly Examples
+Gelly 运行列子
 ----------------------
 
-The Gelly library jars are provided in the [Flink distribution](https://flink.apache.org/downloads.html "Apache Flink: Downloads")
-in the **opt** directory (for versions older than Flink 1.2 these can be manually downloaded from
-[Maven Central](http://search.maven.org/#search|ga|1|flink%20gelly)). To run the Gelly examples the **flink-gelly** (for
-Java) or **flink-gelly-scala** (for Scala) jar must be copied to Flink's **lib** directory.
+Gelly库jar在[Flink发行版]中提供(https://flink.apache.org/downloads.html“Apache Flink: Downloads”)。
+在**opt**目录中(对于Flink 1.2以上的版本，可以手动从该目录下载
+ga(Maven中央)(http://search.maven.org/搜索| | 1 | flink % 20葛里炸药))。要运行Gelly示例，请使用**flink-gelly** (for
+(对于Scala) jar必须复制到Flink的**lib**目录中。
 
 ~~~bash
 cp opt/flink-gelly_*.jar lib/
 cp opt/flink-gelly-scala_*.jar lib/
 ~~~
 
-Gelly's examples jar includes drivers for each of the library methods and is provided in the **examples** directory.
-After configuring and starting the cluster, list the available algorithm classes:
-
+Gelly的examples jar包含每个库方法的驱动程序，并在**examples**目录中提供。
+配置并启动集群后，列出可用的算法类:
 ~~~bash
 ./bin/start-cluster.sh
 ./bin/flink run examples/gelly/flink-gelly-examples_*.jar
 ~~~
 
-The Gelly drivers can generate graph data or read the edge list from a CSV file (each node in a cluster must have access
-to the input file). The algorithm description, available inputs and outputs, and configuration are displayed when an
-algorithm is selected. Print usage for [JaccardIndex](./library_methods.html#jaccard-index):
 
 ~~~bash
 ./bin/flink run examples/gelly/flink-gelly-examples_*.jar --algorithm JaccardIndex
@@ -105,14 +93,13 @@ Display [graph metrics](./library_methods.html#metric) for a million vertex grap
     --input RMatGraph --type integer --scale 20 --simplify directed \
     --output print
 ~~~
+图的大小由*\-\-scale*和*\-\-edge_factor*参数调整。的
+[library generator](./graph_generator .html#rmat-graph)提供对其他配置的访问，以调整
+幂律歪斜和随机噪声。
 
-The size of the graph is adjusted by the *\-\-scale* and *\-\-edge_factor* parameters. The
-[library generator](./graph_generators.html#rmat-graph) provides access to additional configuration to adjust the
-power-law skew and random noise.
-
-Sample social network data is provided by the [Stanford Network Analysis Project](http://snap.stanford.edu/data/index.html).
-The [com-lj](http://snap.stanford.edu/data/bigdata/communities/com-lj.ungraph.txt.gz) data set is a good starter size.
-Run a few algorithms and monitor the job progress in Flink's Web UI:
+示例社交网络数据由[Stanford network Analysis Project](http://snap.stanford.edu/data/index.html)提供。
+[com-lj](http://snap.stanford.edu/data/bigdata/communties/com-lj.ungraph.txt.gz)数据集是一个很好的初始大小。
+在Flink的Web UI中运行一些算法并监控工作进程:
 
 ~~~bash
 wget -O - http://snap.stanford.edu/data/bigdata/communities/com-lj.ungraph.txt.gz | gunzip -c > com-lj.ungraph.txt
@@ -132,9 +119,8 @@ wget -O - http://snap.stanford.edu/data/bigdata/communities/com-lj.ungraph.txt.g
     --input CSV --type integer --simplify undirected --input_filename com-lj.ungraph.txt --input_field_delimiter $'\t' \
     --output hash
 ~~~
-
-Please submit feature requests and report issues on the user [mailing list](https://flink.apache.org/community.html#mailing-lists)
-or [Flink Jira](https://issues.apache.org/jira/browse/FLINK). We welcome suggestions for new algorithms and features as
-well as [code contributions](https://flink.apache.org/contribute-code.html).
+请提交特性请求并在用户[邮件列表]上报告问题(https://flink.apache.org/community.html#邮件列表)
+或(Flink Jira)(https://issues.apache.org/jira/browse/FLINK)。我们欢迎对新的算法和功能的建议
+以及[代码贡献](https://flink.apache.org/contribut-code.html)。
 
 {% top %}
