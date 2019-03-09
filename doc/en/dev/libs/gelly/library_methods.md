@@ -1,34 +1,30 @@
 ---
-title: Library Methods
+title: 方法库
 nav-parent_id: graphs
 nav-pos: 3
 ---
 <!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
+授权给Apache软件基金会(ASF)
+或者更多贡献者许可协议。参见通知文件
+与此工作一起分发，以获取更多信息
+关于版权的所有权。ASF许可此文件
+在Apache许可下，2.0版
+“许可”);除非符合规定，否则您不能使用此文件
+的许可证。你可于
+http://www.apache.org/licenses/LICENSE-2.0
+除非适用法律要求或经书面同意，
+在授权下发布的软件是在
+无任何保证或条件
+善意的，明示的或暗示的。参见许可证
+管理权限和限制的特定语言
+根据许可证。
 -->
+Gelly拥有越来越多的图算法，可以方便地分析大型图。
 
-Gelly has a growing collection of graph algorithms for easily analyzing large-scale Graphs.
-
-* This will be replaced by the TOC
+* 这将被TOC替换
 {:toc}
 
-Gelly's library methods can be used by simply calling the `run()` method on the input graph:
-
+Gelly的库方法可以通过简单地调用输入图上的' run() '方法来使用:
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
 {% highlight java %}
@@ -36,10 +32,10 @@ ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
 Graph<Long, Long, NullValue> graph = ...
 
-// run Label Propagation for 30 iterations to detect communities on the input graph
+// 运行标签传播30次，以检测输入图上的社区
 DataSet<Vertex<Long, Long>> verticesWithCommunity = graph.run(new LabelPropagation<Long>(30));
 
-// print the result
+// 打印结果
 verticesWithCommunity.print();
 
 {% endhighlight %}
@@ -51,406 +47,364 @@ val env = ExecutionEnvironment.getExecutionEnvironment
 
 val graph: Graph[java.lang.Long, java.lang.Long, NullValue] = ...
 
-// run Label Propagation for 30 iterations to detect communities on the input graph
+// 运行标签传播30次，以检测输入图上的社区
 val verticesWithCommunity = graph.run(new LabelPropagation[java.lang.Long, java.lang.Long, NullValue](30))
 
-// print the result
+// 打印结果
 verticesWithCommunity.print()
 
 {% endhighlight %}
 </div>
 </div>
 
-## Community Detection
+## 社区发现
 
-#### Overview
-In graph theory, communities refer to groups of nodes that are well connected internally, but sparsely connected to other groups.
-This library method is an implementation of the community detection algorithm described in the paper [Towards real-time community detection in large networks](http://arxiv.org/pdf/0808.2633.pdf).
+#### 概述
+在图论中，群落是指内部连接良好，但与其他组连接稀疏的节点组。
+该库方法是本文[面向大型网络实时社区检测]中描述的社区检测算法的实现(http://arxiv.org/pdf/0808.2633.pdf)。
+#### 详情
+该算法使用[散集-收集迭代](#散集-收集-迭代)实现。
+最初，每个顶点被分配一个“Tuple2”，包含它的初值以及一个等于1.0的分数。
+在每个迭代中，顶点将它们的标签和分数发送给它们的邻居。当接收到邻居的消息时，
+顶点选择得分最高的标签，然后使用边缘值对其重新打分，
+用户定义的跳衰减参数“delta”和超步数。
+当顶点不再更新其值或迭代次数达到最大值时，算法收敛
+是达到了。
 
-#### Details
-The algorithm is implemented using [scatter-gather iterations](#scatter-gather-iterations).
-Initially, each vertex is assigned a `Tuple2` containing its initial value along with a score equal to 1.0.
-In each iteration, vertices send their labels and scores to their neighbors. Upon receiving messages from its neighbors,
-a vertex chooses the label with the highest score and subsequently re-scores it using the edge values,
-a user-defined hop attenuation parameter, `delta`, and the superstep number.
-The algorithm converges when vertices no longer update their value or when the maximum number of iterations
-is reached.
+#### 用法
+该算法将一个“图”作为输入，包含任何顶点类型、“长”顶点值和“双”边值。它返回一个与输入类型相同的“图形”，
+其中顶点值对应于共同体标签，即如果两个顶点具有相同的顶点值，则它们属于同一共同体。
+构造函数接受两个参数:
+* `maxIterations`: 要运行的最大迭代数。
+* `delta`: 跳转衰减参数，默认值为0.5。
+## 标签传播
 
-#### Usage
-The algorithm takes as input a `Graph` with any vertex type, `Long` vertex values, and `Double` edge values. It returns a `Graph` of the same type as the input,
-where the vertex values correspond to the community labels, i.e. two vertices belong to the same community if they have the same vertex value.
-The constructor takes two parameters:
+#### 概述
+这是[本文]中描述的著名标签传播算法的实现(http://journals.aps.org/pre/abstract/10.1103/PhysRevE.76.036106)。该算法通过在邻居之间迭代传播标签来发现图中的社区。与[Community Detection library method](# Community - Detection)不同，这个实现不使用与标签相关的分数。
 
-* `maxIterations`: the maximum number of iterations to run.
-* `delta`: the hop attenuation parameter, with default value 0.5.
+#### 详情
+该算法使用[散集-收集迭代](#散集-收集-迭代)实现。
+标签的类型应该是“Comparable”，并使用输入“Graph”的顶点值初始化。
+该算法通过传播标签来迭代细化发现的社区。在每次迭代中，取一个顶点
+在相邻的标签中最常见的标签。如果出现并列(即两个或多个标签出现在
+同样的频率)，算法选择更大的标签。当没有顶点改变其值或时，算法收敛
+已达到最大迭代次数。注意，不同的初始化可能导致不同的结果。
 
-## Label Propagation
+#### 使用
+该算法将具有“可比”顶点类型、“可比”顶点值类型和任意边值类型的“图”作为输入。
+它返回一个顶点的“数据集”，其中顶点值对应于收敛后该顶点所属的社区。
+构造函数接受一个参数:
 
-#### Overview
-This is an implementation of the well-known Label Propagation algorithm described in [this paper](http://journals.aps.org/pre/abstract/10.1103/PhysRevE.76.036106). The algorithm discovers communities in a graph, by iteratively propagating labels between neighbors. Unlike the [Community Detection library method](#community-detection), this implementation does not use scores associated with the labels.
+* `maxIterations`: 要运行的最大迭代数。.
 
-#### Details
-The algorithm is implemented using [scatter-gather iterations](#scatter-gather-iterations).
-Labels are expected to be of type `Comparable` and are initialized using the vertex values of the input `Graph`.
-The algorithm iteratively refines discovered communities by propagating labels. In each iteration, a vertex adopts
-the label that is most frequent among its neighbors' labels. In case of a tie (i.e. two or more labels appear with the
-same frequency), the algorithm picks the greater label. The algorithm converges when no vertex changes its value or
-the maximum number of iterations has been reached. Note that different initializations might lead to different results.
+## 连通分支
 
-#### Usage
-The algorithm takes as input a `Graph` with a `Comparable` vertex type, a `Comparable` vertex value type and an arbitrary edge value type.
-It returns a `DataSet` of vertices, where the vertex value corresponds to the community in which this vertex belongs after convergence.
-The constructor takes one parameter:
+#### 概述
+这是一个实现弱连通分支算法。在收敛时，两个顶点属于
+相同的分量，如果有一条路径从一个到另一个，不考虑边缘方向。
 
-* `maxIterations`: the maximum number of iterations to run.
+#### 详情
+该算法使用[散集-收集迭代](#散集-收集-迭代)实现。
+这个实现使用一个可比较的顶点值作为初始组件标识符(ID)。顶点传播他们的
+每个迭代中的当前值。当一个顶点从它的邻居那里接收组件ID时，如果
+当顶点不再更新其组件时，算法收敛
+ID值或达到最大迭代次数时的值。
+#### 使用
+结果是一个顶点的“数据集”，其中顶点值对应于指定的组件。
+构造函数接受一个参数:
 
-## Connected Components
+* `maxIterations`: 要运行的最大迭代数。.
 
-#### Overview
-This is an implementation of the Weakly Connected Components algorithm. Upon convergence, two vertices belong to the
-same component, if there is a path from one to the other, without taking edge direction into account.
+## GSA 连通分支
 
-#### Details
-The algorithm is implemented using [scatter-gather iterations](#scatter-gather-iterations).
-This implementation uses a comparable vertex value as initial component identifier (ID). Vertices propagate their
-current value in each iteration. Upon receiving component IDs from its neighbors, a vertex adopts a new component ID if
-its value is lower than its current component ID. The algorithm converges when vertices no longer update their component
-ID value or when the maximum number of iterations has been reached.
+#### 概述
+这是一个实现弱连通分支算法。在收敛时，两个顶点属于
+相同的分量，如果有一条路径从一个到另一个，不考虑边缘方向。
 
-#### Usage
-The result is a `DataSet` of vertices, where the vertex value corresponds to the assigned component.
-The constructor takes one parameter:
+#### 详情
+该算法是使用[gather-sum-apply迭代](#gather-sum-apply-iteration)实现的。
+这个实现使用一个可比较的顶点值作为初始组件标识符(ID)。在聚集阶段，每个
+顶点收集它们相邻顶点的顶点值。在求和阶段，这些值中的最小值为
+选中。在应用阶段，如果最小值小于新的顶点值，则算法将其设置为新的顶点值
+当前值。当顶点不再更新其组件ID值或
+已达到最大迭代次数。
 
-* `maxIterations`: the maximum number of iterations to run.
+#### 使用
+结果是一个顶点的“数据集”，其中顶点值对应于指定的组件。
+构造函数接受一个参数:
 
-## GSA Connected Components
+* `maxIterations`: 要运行的最大迭代数。.
 
-#### Overview
-This is an implementation of the Weakly Connected Components algorithm. Upon convergence, two vertices belong to the
-same component, if there is a path from one to the other, without taking edge direction into account.
+## 单源最短路径
 
-#### Details
-The algorithm is implemented using [gather-sum-apply iterations](#gather-sum-apply-iterations).
-This implementation uses a comparable vertex value as initial component identifier (ID). In the gather phase, each
-vertex collects the vertex value of their adjacent vertices. In the sum phase, the minimum among those values is
-selected. In the apply phase, the algorithm sets the minimum value as the new vertex value if it is smaller than
-the current value. The algorithm converges when vertices no longer update their component ID value or when the
-maximum number of iterations has been reached.
+#### 概述
+一种加权图的单源最短路径算法的实现。给定一个源顶点，算法计算从这个源到图中所有其他节点的最短路径。
 
-#### Usage
-The result is a `DataSet` of vertices, where the vertex value corresponds to the assigned component.
-The constructor takes one parameter:
+#### 详情
+该算法使用[散集-收集迭代](#散集-收集-迭代)实现。
+在每次迭代中，一个顶点向它的邻居发送一条消息，其中包含它当前距离和连接这个顶点与邻居的边权值的和。当接收到候选距离消息时，顶点计算最小距离，如果发现更短的路径，则更新其值。如果一个顶点在超步骤中没有改变它的值，那么它就不会为下一个超步骤的邻居生成消息。计算在指定的最大超步数或没有值更新时终止
+#### 使用
+该算法将一个“图”作为输入，其中包含任何顶点类型和“双”边值。顶点值可以是任何类型，并且不被这个算法使用。顶点类型必须实现' equals() '。
+输出是一个“数据集”的顶点，其中顶点值对应到给定源顶点的最小距离。
+构造函数接受两个参数:
+* `srcVertexId` 源顶点的顶点ID.
+* `maxIterations`: 要运行的最大迭代数。.
 
-* `maxIterations`: the maximum number of iterations to run.
+## GSA单源最短路径
 
-## Single Source Shortest Paths
+算法实现使用[gather-sum-apply iterations](#gather-sum-apply-iterations).
 
-#### Overview
-An implementation of the Single-Source-Shortest-Paths algorithm for weighted graphs. Given a source vertex, the algorithm computes the shortest paths from this source to all other nodes in the graph.
+看 [Single Source Shortest Paths](#single-source-shortest-paths) 此库实现 详情 和 使用 信息.
 
-#### Details
-The algorithm is implemented using [scatter-gather iterations](#scatter-gather-iterations).
-In each iteration, a vertex sends to its neighbors a message containing the sum its current distance and the edge weight connecting this vertex with the neighbor. Upon receiving candidate distance messages, a vertex calculates the minimum distance and, if a shorter path has been discovered, it updates its value. If a vertex does not change its value during a superstep, then it does not produce messages for its neighbors for the next superstep. The computation terminates after the specified maximum number of supersteps or when there are no value updates.
+## 三角形枚举器
 
-#### Usage
-The algorithm takes as input a `Graph` with any vertex type and `Double` edge values. The vertex values can be any type and are not used by this algorithm. The vertex type must implement `equals()`.
-The output is a `DataSet` of vertices where the vertex values correspond to the minimum distances from the given source vertex.
-The constructor takes two parameters:
+#### 概述
+这个库方法枚举输入图中出现的惟一三角形。三角形由三条边组成，三条边相互连接三个顶点。
+此实现忽略边缘方向。
 
-* `srcVertexId` The vertex ID of the source vertex.
-* `maxIterations`: the maximum number of iterations to run.
+#### 详情
+基本的三角形枚举算法将共享一个公共顶点并构建三元组的所有边分组，即，顶点的三组
+是由两条边连接起来的。然后，过滤所有不存在关闭三角形的第三条边的三元组。
+对于共享一个顶点的一组<i>n</i>边，构建的三元组的数量是二次的<i>((n*(n-1))/2)</i>。
+因此，优化算法的一种方法是在输出度较小的顶点上对边进行分组，以减少三角形的数量。
+该实现通过计算边缘顶点的输出度，并对边的小度顶点进行边的分组，扩展了基本算法。
+#### 使用
+该算法以一个有向图作为输入，输出一个“Tuple3”的“数据集”。顶点ID类型必须是“可比的”。
+每个“Tuple3”对应一个三角形，其中的字段包含构成三角形的顶点的id。
+## 摘要
 
-## GSA Single Source Shortest Paths
+#### 概述
+的摘要算法计算压缩版本分组输入图的顶点和边的基础上
+它们的值。在此过程中，该算法有助于揭示关于图中的模式和分布的见解。
+一个可能的用例是社区的可视化，其中整个图太大，需要对其进行总结
+基于存储在顶点上的社区标识符。
 
-The algorithm is implemented using [gather-sum-apply iterations](#gather-sum-apply-iterations).
+#### 详情
+在生成的图中，每个顶点表示一组共享相同值的顶点。连接a的边
+顶点本身，表示具有相同边值的所有边，这些边值连接来自相同顶点组的顶点。一个
+输出图中不同顶点之间的边表示成员之间具有相同边值的所有边
+输入图中不同的顶点组。
+该算法采用Flink数据运算符实现。首先，顶点根据它们的值和一个代表符进行分组
+从每个组中选择。对于任何边，源和目标顶点标识符都替换为相应的
+具有代表性，并按源、目标和边缘值分组。输出顶点和边是从它们的
+相应的分组。
 
-See the [Single Source Shortest Paths](#single-source-shortest-paths) library method for implementation details and usage information.
+#### 使用
+该算法采用有向图、顶点图(可能还有边)属性图作为输入和输出，其中每个都有一个新的图
+顶点表示一组顶点，每条边表示输入图中的一组边。此外,每个
+输出图中的顶点和边缘存储公共组值和表示元素的数量。
 
-## Triangle Enumerator
+## 集群使用
 
-#### Overview
-This library method enumerates unique triangles present in the input graph. A triangle consists of three edges that connect three vertices with each other.
-This implementation ignores edge directions.
+### 平均集群系数
 
-#### Details
-The basic triangle enumeration algorithm groups all edges that share a common vertex and builds triads, i.e., triples of vertices
-that are connected by two edges. Then, all triads are filtered for which no third edge exists that closes the triangle.
-For a group of <i>n</i> edges that share a common vertex, the number of built triads is quadratic <i>((n*(n-1))/2)</i>.
-Therefore, an optimization of the algorithm is to group edges on the vertex with the smaller output degree to reduce the number of triads.
-This implementation extends the basic algorithm by computing output degrees of edge vertices and grouping on edges on the vertex with the smaller degree.
+#### 概述
+平均聚类系数度量图的平均连通性。得分范围从0.0(之间没有边缘)
+邻居)到1.0(完整的图)。
 
-#### Usage
-The algorithm takes a directed graph as input and outputs a `DataSet` of `Tuple3`. The Vertex ID type has to be `Comparable`.
-Each `Tuple3` corresponds to a triangle, with the fields containing the IDs of the vertices forming the triangle.
+#### 详情
+详细说明请参阅[局部聚类系数](#局部聚类系数)库方法
+聚类系数。平均聚类系数是局部聚类系数得分的平均值
+在所有顶点上至少有两个邻居。每个顶点，与度数无关，对于这个分数具有相同的权重。
 
-## Summarization
-
-#### Overview
-The summarization algorithm computes a condensed version of the input graph by grouping vertices and edges based on
-their values. In doing so, the algorithm helps to uncover insights about patterns and distributions in the graph.
-One possible use case is the visualization of communities where the whole graph is too large and needs to be summarized
-based on the community identifier stored at a vertex.
-
-#### Details
-In the resulting graph, each vertex represents a group of vertices that share the same value. An edge, that connects a
-vertex with itself, represents all edges with the same edge value that connect vertices from the same vertex group. An
-edge between different vertices in the output graph represents all edges with the same edge value between members of
-different vertex groups in the input graph.
-
-The algorithm is implemented using Flink data operators. First, vertices are grouped by their value and a representative
-is chosen from each group. For any edge, the source and target vertex identifiers are replaced with the corresponding
-representative and grouped by source, target and edge value. Output vertices and edges are created from their
-corresponding groupings.
-
-#### Usage
-The algorithm takes a directed, vertex (and possibly edge) attributed graph as input and outputs a new graph where each
-vertex represents a group of vertices and each edge represents a group of edges from the input graph. Furthermore, each
-vertex and edge in the output graph stores the common group value and the number of represented elements.
-
-## Clustering
-
-### Average Clustering Coefficient
-
-#### Overview
-The average clustering coefficient measures the mean connectedness of a graph. Scores range from 0.0 (no edges between
-neighbors) to 1.0 (complete graph).
-
-#### Details
-See the [Local Clustering Coefficient](#local-clustering-coefficient) library method for a detailed explanation of
-clustering coefficient. The Average Clustering Coefficient is the average of the Local Clustering Coefficient scores
-over all vertices with at least two neighbors. Each vertex, independent of degree, has equal weight for this score.
-
-#### Usage
-Directed and undirected variants are provided. The analytics take a simple graph as input and output an `AnalyticResult`
-containing the total number of vertices and average clustering coefficient of the graph. The graph ID type must be
-`Comparable` and `Copyable`.
+#### 使用
+详细说明请参阅[局部聚类系数](#局部聚类系数)库方法
+聚类系数。平均聚类系数是局部聚类系数得分的平均值
+在所有顶点上至少有两个邻居。每个顶点，与度数无关，对于这个分数具有相同的权重。提供有向和无向变体。分析方法将一个简单的图形作为输入，然后输出一个“分析结果”
+包含图的顶点总数和平均聚类系数。图形ID类型必须是
+“可比性”和“复制”。
 
 * `setParallelism`: override the parallelism of operators processing small amounts of data
 
-### Global Clustering Coefficient
+### 全局聚类系数
 
-#### Overview
-The global clustering coefficient measures the connectedness of a graph. Scores range from 0.0 (no edges between
-neighbors) to 1.0 (complete graph).
+#### 概述
+全局聚类系数度量图的连通性。得分范围从0.0(之间没有边缘)
+邻居)到1.0(完整的图)。
 
-#### Details
-See the [Local Clustering Coefficient](#local-clustering-coefficient) library method for a detailed explanation of
-clustering coefficient. The Global Clustering Coefficient is the ratio of connected neighbors over the entire graph.
-Vertices with higher degrees have greater weight for this score because the count of neighbor pairs is quadratic in
-degree.
+#### 详情
+详细说明请参阅[局部聚类系数](#局部聚类系数)库方法
+聚类系数。全局聚类系数是连通邻域在整个图上的比值。
+度高的顶点对于这个分数有更大的权重，因为相邻对的计数是二次的
+学位。
 
-#### Usage
-Directed and undirected variants are provided. The analytics take a simple graph as input and output an `AnalyticResult`
-containing the total number of triplets and triangles in the graph. The result class provides a method to compute the
-global clustering coefficient score. The graph ID type must be `Comparable` and `Copyable`.
+#### 使用
+提供有向和无向变体。分析方法将一个简单的图形作为输入，然后输出一个“分析结果”
+包含图中三胞胎和三角形的总数。result类提供了计算
+全局聚类系数得分。图形ID类型必须是“可比较的”和“可复制的”。
+*“setParallelism”:覆盖处理少量数据的操作符的并行性
 
-* `setParallelism`: override the parallelism of operators processing small amounts of data
+### 当地的聚类系数
 
-### Local Clustering Coefficient
+#### 概述
+局部聚类系数度量每个顶点邻域的连通性。得分范围从0.0 (no
+邻居之间的边缘)到1.0(邻居是一个小团体)。
 
-#### Overview
-The local clustering coefficient measures the connectedness of each vertex's neighborhood. Scores range from 0.0 (no
-edges between neighbors) to 1.0 (neighborhood is a clique).
+#### 详情
+顶点相邻边之间的边是三角形。计算邻居之间的边与计算
+包含顶点的三角形数。聚类系数得分是相邻边的个数
+除以邻边之间的潜在边数。
+有关三角形枚举的详细说明，请参阅[Triangle Listing](# Triangle - Listing)库方法。
 
-#### Details
-An edge between neighbors of a vertex is a triangle. Counting edges between neighbors is equivalent to counting the
-number of triangles which include the vertex. The clustering coefficient score is the number of edges between neighbors
-divided by the number of potential edges between neighbors.
-
-See the [Triangle Listing](#triangle-listing) library method for a detailed explanation of triangle enumeration.
-
-#### Usage
-Directed and undirected variants are provided. The algorithms take a simple graph as input and output a `DataSet` of
-`UnaryResult` containing the vertex ID, vertex degree, and number of triangles containing the vertex. The result class
-provides a method to compute the local clustering coefficient score. The graph ID type must be `Comparable` and
-`Copyable`.
-
-* `setIncludeZeroDegreeVertices`: include results for vertices with a degree of zero
-* `setParallelism`: override the parallelism of operators processing small amounts of data
+#### 使用
+顶点相邻边之间的边是三角形。计算邻居之间的边等价于计算有向变量和无向变量。该算法以一个简单的图形作为输入和输出的“数据集”
+' UnaryResult '包含顶点ID、顶点度数和包含顶点的三角形数。结果类
+提供了一种计算局部聚类系数得分的方法。图形ID类型必须是“Comparable”和
+“复制”。
+* ' setincludezerodegreever格':包括顶点的结果与程度为零
+*“setParallelism”:覆盖处理少量数据的操作符的并行性
+包含顶点的三角形数。聚类系数得分是相邻边的个数
+除以邻边之间的潜在边数。
+有关三角形枚举的详细说明，请参阅[Triangle Listing](# Triangle - Listing)库方法。
 
 ### Triadic Census
 
-#### Overview
-A triad is formed by any three vertices in a graph. Each triad contains three pairs of vertices which may be connected
-or unconnected. The [Triadic Census](http://vlado.fmf.uni-lj.si/pub/networks/doc/triads/triads.pdf) counts the
-occurrences of each type of triad with the graph.
+#### 概述
 
-#### Details
-This analytic counts the four undirected triad types (formed with 0, 1, 2, or 3 connecting edges) or 16 directed triad
-types by counting the triangles from [Triangle Listing](#triangle-listing) and running [Vertex Metrics](#vertex-metrics)
-to obtain the number of triplets and edges. Triangle counts are then deducted from triplet counts, and triangle and
-triplet counts are removed from edge counts.
+三元组由图中的任意三个顶点组成。每个三元组包含三对可以连接的顶点
+或无关的。[Triadic Census](http://vlado.fmf.uni-lj.si/pub/networks/doc/triads/triads.pdf)统计了
+在图中出现每种类型的三元组。
+#### 详情
+该分析计算了四种无向三元组(由0、1、2或3条连接边组成)或16种有向三元组
+通过计算[Triangle Listing](# Triangle - Listing)中的三角形(# Triangle Metrics)和运行[Vertex Metrics](# Vertex - Metrics)来输入
+得到三胞胎和边的数目。然后从三重计数中减去三角形计数，三角形和
+从边缘计数中删除三重计数。
 
-#### Usage
-Directed and undirected variants are provided. The analytics take a simple graph as input and output an
-`AnalyticResult` with accessor methods for querying the count of each triad type. The graph ID type must be
-`Comparable` and `Copyable`.
-
-* `setParallelism`: override the parallelism of operators processing small amounts of data
+#### 使用
+提供有向和无向变体。分析以一个简单的图形作为输入和输出
+“AnalyticResult”，带有访问器方法，用于查询每个三元组类型的计数。图形ID类型必须是
+“可比性”和“复制”。
+*“setParallelism”:覆盖处理少量数据的操作符的并行性
 
 ### Triangle Listing
 
-#### Overview
-Enumerates all triangles in the graph. A triangle is composed of three edges connecting three vertices into cliques of
-size 3.
+#### 概述
+枚举图中的所有三角形。三角形由三条边组成，三条边把三个顶点连接成三角形的小圈
+尺寸3。
+#### 详情
+三角形是通过将开放三联体(具有公共邻居的两条边)连接到三联体端点上的边而列出的。
+此实现使用来自
+[Schank的算法](http://i11www.iti.uni-karlsruhe.de/extra/publications/sw-fclt-05_t.pdf)
+高度顶点。因为每个三角形只需要列出一次，所以从最低次顶点生成三联。
+这大大减少了生成的三胞胎的数量，这是二次的顶点度。
 
-#### Details
-Triangles are listed by joining open triplets (two edges with a common neighbor) against edges on the triplet endpoints.
-This implementation uses optimizations from
-[Schank's algorithm](http://i11www.iti.uni-karlsruhe.de/extra/publications/sw-fclt-05_t.pdf) to improve performance with
-high-degree vertices. Triplets are generated from the lowest degree vertex since each triangle need only be listed once.
-This greatly reduces the number of generated triplets which is quadratic in vertex degree.
+#### 使用
+提供有向和无向变体。该算法以一个简单的图形作为输入和输出的“数据集”
+包含三个三角形顶点的“aryresult”，对于有向算法，每个顶点都有一个位掩码
+连接三个顶点的六条可能的边。图形ID类型必须是“可比较的”和“可复制的”。
+*“setParallelism”:覆盖处理少量数据的操作符的并行性
+* ' setsorttrianglever':对三角形列表进行规范化，以便对每个结果(K0, K1, K2)的顶点id排序为K0 < K1 < K2
 
-#### Usage
-Directed and undirected variants are provided. The algorithms take a simple graph as input and output a `DataSet` of
-`TertiaryResult` containing the three triangle vertices and, for the directed algorithm, a bitmask marking each of the
-six potential edges connecting the three vertices. The graph ID type must be `Comparable` and `Copyable`.
+## 链接分析
 
-* `setParallelism`: override the parallelism of operators processing small amounts of data
-* `setSortTriangleVertices`: normalize the triangle listing such that for each result (K0, K1, K2) the vertex IDs are sorted K0 < K1 < K2
+### 链接分析
 
-## Link Analysis
+#### 概述
+[超连结引发的主题搜寻](http://www.cs.cornell.edu/home/kleinber/auth.pdf)
+为有向图中的每个顶点计算两个相互依赖的分数。好的集线器是指向很多的集线器
+好的权威和好的权威是由许多好的中心所指向的。
+# # # #详情
+每个顶点都被分配相同的初始集线器和权限得分。然后，算法迭代地更新分数
+直到终止。在每个迭代过程中，新的中心得分从权威得分计算，然后是新的权威
+分数是根据新的hub分数计算的。然后对分数进行标准化，并可选地进行收敛性测试。
+点击量类似于[PageRank](# PageRank)，但顶点得分会全部发送给每个邻居，而在PageRank中
+顶点得分首先除以邻居的数量。
+# # # #使用
+该算法以一个简单的有向图作为输入和输出包含顶点ID的“UnaryResult”的“DataSet”，
+hub评分和authority评分。终止由迭代次数和/或收敛阈值来配置
+所有顶点得分变化的迭代和。
+* ' setincludezerodegreever格':是否在迭代计算中包含0度顶点
+* ' setParallelism ':覆盖操作符parallelism
+# # #网页排名
+# # # #概述
+[PageRank](https://en.wikipedia.org/wiki/PageRank)是第一个用于对web搜索引擎进行排名的算法
+结果。目前，该算法和许多变体被用于各种图形应用领域。PageRank的概念是
+重要的或相关的顶点倾向于链接到其他重要的顶点。
+# # # #详情
+算法在迭代中运行，其中页面将它们的得分分配给它们的邻居(它们有链接的页面)
+然后根据他们收到的值的总和更新他们的分数。为了考虑a的重要性
+从一个页面到另一个页面的链接，分数除以源页面的外链接总数。因此，一页用
+10个链接将其分数的1/10分发给每个邻居，而一个有100个链接的页面将其分数的1/100分发给每个邻居
+给每个相邻的页面打分。
+#### 使用
+该算法采用有向图作为输入和输出“数据集”，其中每个“结果”包含顶点ID和
+网页排名得分。终止配置了最大迭代次数和/或收敛阈值
+计算迭代之间每个顶点的得分变化之和。
+* ' setParallelism ':覆盖操作符parallelism
+# #规
+# # #顶点指标
+# # # #概述
+本图分析计算了有向图和无向图的以下统计数据:
+-顶点数
+-边数
+——平均程度
+-三胞胎的数目
+——最大程度
+-最大三胞胎数目
+对于有向图，还计算了以下统计数据:
+-单向边数
+-双向边数
+-最大出度
+-最大程度
+# # # #详情
+这些统计数据是通过' degree.annotate.direct '生成的顶点度数来计算的。VertexDegrees”或
+“degree.annotate.undirected.VertexDegree”。
+# # # #使用
+提供有向和无向变体。分析方法将一个简单的图形作为输入，然后输出一个“分析结果”
+用于计算统计信息的访问器方法。图形ID类型必须是“Comparable”。
+* ' setincludezerodegreever格':包括顶点的结果与程度为零
+* ' setParallelism ':覆盖操作符parallelism
+*“setReduceOnTargetId”(仅无定向):可以从边缘源id或目标id计算度数。默认情况下计算源id。如果按照目标ID对输入边缘列表进行排序，则减少目标ID可以优化算法
+# # #边缘度量
+# # # #概述
+此图分析计算了以下统计数据:
+-三角形三胞胎的数目
+-矩形三胞胎的数量
+-三角形三胞胎的最大数量
+-矩形三胞胎的最大数量
 
-### Hyperlink-Induced Topic Search
-
-#### Overview
-[Hyperlink-Induced Topic Search](http://www.cs.cornell.edu/home/kleinber/auth.pdf) (HITS, or "Hubs and Authorities")
-computes two interdependent scores for every vertex in a directed graph. Good hubs are those which point to many
-good authorities and good authorities are those pointed to by many good hubs.
-
-#### Details
-Every vertex is assigned the same initial hub and authority scores. The algorithm then iteratively updates the scores
-until termination. During each iteration new hub scores are computed from the authority scores, then new authority
-scores are computed from the new hub scores. The scores are then normalized and optionally tested for convergence.
-HITS is similar to [PageRank](#pagerank) but vertex scores are emitted in full to each neighbor whereas in PageRank
-the vertex score is first divided by the number of neighbors.
-
-#### Usage
-The algorithm takes a simple directed graph as input and outputs a `DataSet` of `UnaryResult` containing the vertex ID,
-hub score, and authority score. Termination is configured by the number of iterations and/or a convergence threshold on
-the iteration sum of the change in scores over all vertices.
-
-* `setIncludeZeroDegreeVertices`: whether to include zero-degree vertices in the iterative computation
-* `setParallelism`: override the operator parallelism
-
-### PageRank
-
-#### Overview
-[PageRank](https://en.wikipedia.org/wiki/PageRank) is an algorithm that was first used to rank web search engine
-results. Today, the algorithm and many variations are used in various graph application domains. The idea of PageRank is
-that important or relevant vertices tend to link to other important vertices.
-
-#### Details
-The algorithm operates in iterations, where pages distribute their scores to their neighbors (pages they have links to)
-and subsequently update their scores based on the sum of values they receive. In order to consider the importance of a
-link from one page to another, scores are divided by the total number of out-links of the source page. Thus, a page with
-10 links will distribute 1/10 of its score to each neighbor, while a page with 100 links will distribute 1/100 of its
-score to each neighboring page.
-
-#### Usage
-The algorithm takes a directed graph as input and outputs a `DataSet` where each `Result` contains the vertex ID and
-PageRank score. Termination is configured with a maximum number of iterations and/or a convergence threshold
-on the sum of the change in score for each vertex between iterations.
-
-* `setParallelism`: override the operator parallelism
-
-## Metric
-
-### Vertex Metrics
-
-#### Overview
-This graph analytic computes the following statistics for both directed and undirected graphs:
-- number of vertices
-- number of edges
-- average degree
-- number of triplets
-- maximum degree
-- maximum number of triplets
-
-The following statistics are additionally computed for directed graphs:
-- number of unidirectional edges
-- number of bidirectional edges
-- maximum out degree
-- maximum in degree
-
-#### Details
-The statistics are computed over vertex degrees generated from `degree.annotate.directed.VertexDegrees` or
-`degree.annotate.undirected.VertexDegree`.
-
-#### Usage
-Directed and undirected variants are provided. The analytics take a simple graph as input and output an `AnalyticResult`
-with accessor methods for the computed statistics. The graph ID type must be `Comparable`.
-
-* `setIncludeZeroDegreeVertices`: include results for vertices with a degree of zero
-* `setParallelism`: override the operator parallelism
-* `setReduceOnTargetId` (undirected only): the degree can be counted from either the edge source or target IDs. By default the source IDs are counted. Reducing on target IDs may optimize the algorithm if the input edge list is sorted by target ID
-
-### Edge Metrics
-
-#### Overview
-This graph analytic computes the following statistics:
-- number of triangle triplets
-- number of rectangle triplets
-- maximum number of triangle triplets
-- maximum number of rectangle triplets
-
-#### Details
-The statistics are computed over edge degrees generated from `degree.annotate.directed.EdgeDegreesPair` or
-`degree.annotate.undirected.EdgeDegreePair` and grouped by vertex.
-
-#### Usage
-Directed and undirected variants are provided. The analytics take a simple graph as input and output an `AnalyticResult`
-with accessor methods for the computed statistics. The graph ID type must be `Comparable`.
-
-* `setParallelism`: override the operator parallelism
-* `setReduceOnTargetId` (undirected only): the degree can be counted from either the edge source or target IDs. By default the source IDs are counted. Reducing on target IDs may optimize the algorithm if the input edge list is sorted by target ID
-
-## Similarity
-
-### Adamic-Adar
-
-#### Overview
-Adamic-Adar measures the similarity between pairs of vertices as the sum of the inverse logarithm of degree over shared
-neighbors. Scores are non-negative and unbounded. A vertex with higher degree has greater overall influence but is less
-influential to each pair of neighbors.
-
-#### Details
-The algorithm first annotates each vertex with the inverse of the logarithm of the vertex degree then joins this score
-onto edges by source vertex. Grouping on the source vertex, each pair of neighbors is emitted with the vertex score.
-Grouping on vertex pairs, the Adamic-Adar score is summed.
-
-See the [Jaccard Index](#jaccard-index) library method for a similar algorithm.
-
-#### Usage
-The algorithm takes a simple undirected graph as input and outputs a `DataSet` of `BinaryResult` containing two vertex
-IDs and the Adamic-Adar similarity score. The graph ID type must be `Copyable`.
-
-* `setMinimumRatio`: filter out Adamic-Adar scores less than the given ratio times the average score
-* `setMinimumScore`: filter out Adamic-Adar scores less than the given minimum
-* `setParallelism`: override the parallelism of operators processing small amounts of data
-
-### Jaccard Index
-
-#### Overview
-The Jaccard Index measures the similarity between vertex neighborhoods and is computed as the number of shared neighbors
-divided by the number of distinct neighbors. Scores range from 0.0 (no shared neighbors) to 1.0 (all neighbors are
-shared).
-
-#### Details
-Counting shared neighbors for pairs of vertices is equivalent to counting connecting paths of length two. The number of
-distinct neighbors is computed by storing the sum of degrees of the vertex pair and subtracting the count of shared
-neighbors, which are double-counted in the sum of degrees.
-
-The algorithm first annotates each edge with the target vertex's degree. Grouping on the source vertex, each pair of
-neighbors is emitted with the degree sum. Grouping on vertex pairs, the shared neighbors are counted.
-
-#### Usage
-The algorithm takes a simple undirected graph as input and outputs a `DataSet` of tuples containing two vertex IDs,
-the number of shared neighbors, and the number of distinct neighbors. The result class provides a method to compute the
-Jaccard Index score. The graph ID type must be `Copyable`.
-
-* `setMaximumScore`: filter out Jaccard Index scores greater than or equal to the given maximum fraction
-* `setMinimumScore`: filter out Jaccard Index scores less than the given minimum fraction
-* `setParallelism`: override the parallelism of operators processing small amounts of data
+#### 详情
+这些统计数据是根据“degree.annotate.direct”生成的边缘度计算的。EdgeDegreesPair”或
+“degree.annotate.undirected。并按顶点分组。
+# # # #使用
+提供有向和无向变体。分析方法将一个简单的图形作为输入，然后输出一个“分析结果”
+用于计算统计信息的访问器方法。图形ID类型必须是“Comparable”。
+* ' setParallelism ':覆盖操作符parallelism
+*“setReduceOnTargetId”(仅无定向):可以从边缘源id或目标id计算度数。默认情况下计算源id。如果按照目标ID对输入边缘列表进行排序，则减少目标ID可以优化算法
+# #相似
+# # # Adamic-Adar
+# # # #概述
+Adamic-Adar将顶点对之间的相似性度量为共享度的逆对数之和
+邻居。分数是非负的、无界的。度越高的顶点对整体影响越大，但影响越小
+对每一对邻居都有影响。
+# # # #详情
+该算法首先用顶点度数的对数的倒数来标注每个顶点，然后将这个分数连接起来
+通过源顶点到边上。在源顶点上分组，每对邻居都与顶点得分一起发出。
+对顶点对进行分组，得到亚当-阿达尔评分。
+参见[Jaccard索引](# Jaccard - Index)库方法获得类似的算法。
+# # # #使用
+该算法以一个简单的无向图作为输入和输出包含两个顶点的“BinaryResult”的“DataSet”
+id和adam - adar相似度评分。图形ID类型必须是“可复制的”。
+*“setMinimumRatio”:过滤掉低于给定比率乘以平均分数的Adamic-Adar分数
+*“setMinimumScore”:过滤掉低于给定最小值的Adamic-Adar分数
+*“setParallelism”:覆盖处理少量数据的操作符的并行性
+# # # Jaccard指数
+# # # #概述
+Jaccard索引度量顶点邻域之间的相似性，并计算为共享邻域的数量
+除以不同邻居的数量。得分范围从0.0(没有共享邻居)到1.0(所有邻居都是)
+共享)。
+# # # #详情
+计算顶点对的共享邻居数等价于计算长度为2的连接路径。的数量
+不同的邻域通过存储顶点对的度数和并减去共享的数来计算
+邻域，它们在度数和中被重复计算。
+该算法首先用目标顶点的度数标注每条边。在源顶点上分组，每对
+邻域以次和发出。按顶点对分组，计算共享邻居。
+# # # #使用
+该算法以一个简单的无向图作为输入和输出一个包含两个顶点id的元组“数据集”，
+共享邻居的数量，以及不同邻居的数量。result类提供了计算
+Jaccard指数得分。图形ID类型必须是“可复制的”。
+* ' setMaximumScore ':过滤掉Jaccard索引分数大于或等于给定的最大分数
+* ' setMinimumScore ':过滤掉Jaccard索引分数低于给定的最小分数
+*“setParallelism”:覆盖处理少量数据的操作符的并行性
 
 {% top %}
