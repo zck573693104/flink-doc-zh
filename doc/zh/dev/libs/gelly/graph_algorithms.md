@@ -1,32 +1,29 @@
 ---
-title: Graph Algorithms
-nav-parent_id: graphs
+标题:图算法
+nav-parent_id:图
 nav-pos: 4
 ---
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
+< !
+授权给Apache软件基金会(ASF)
+或者更多贡献者许可协议。查看通知文件
+与此工作一起分发，以获取更多信息
+关于版权的所有权。ASF许可此文件
+在Apache许可下，2.0版
+“许可”);除非符合规定，否则您不能使用此文件
+的许可证。你可于
+http://www.apache.org/licenses/LICENSE-2.0
+除非适用法律要求或经书面同意，
+在授权下发布的软件是在
+无任何保证或条件
+善意的，明示的或暗示的。参见许可证
+管理权限和限制的特定语言
+根据许可证。
 -->
 
-The logic blocks with which the `Graph` API and top-level algorithms are assembled are accessible in Gelly as graph
-algorithms in the `org.apache.flink.graph.asm` package. These algorithms provide optimization and tuning through
-configuration parameters and may provide implicit runtime reuse when processing the same input with a similar
-configuration.
-
+“图”API和顶级算法组装使用的逻辑块可以在Gelly中以图的形式访问
+org.apache.flink.graph中的算法。asm的包。这些算法提供了优化和调优
+配置参数，并可能在处理相同输入时提供隐式运行时重用
+配置。
 <table class="table table-bordered">
   <thead>
     <tr>
