@@ -1,43 +1,28 @@
 ---
-title: Graph Generators
-nav-parent_id: graphs
+标题:图创建
+nav-parent_id:图
 nav-pos: 5
 ---
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
+< !
+授权给Apache软件基金会(ASF)
+或者更多贡献者许可协议。查看通知文件
+与此工作一起分发，以获取更多信息
+关于版权的所有权。ASF许可此文件
+在Apache许可下，2.0版
+“许可”);除非符合规定，否则您不能使用此文件
+的许可证。你可于
+http://www.apache.org/licenses/LICENSE-2.0
+除非适用法律要求或经书面同意，
+在授权下发布的软件是在
+无任何保证或条件
+善意的，明示的或暗示的。参见许可证
+管理权限和限制的特定语言
+根据许可证。
 -->
 
-* This will be replaced by the TOC
+* 这将被TOC替换
 {:toc}
 
-Gelly provides a collection of scalable graph generators. Each generator is
-
-* parallelizable, in order to create large datasets
-* scale-free, generating the same graph regardless of parallelism
-* thrifty, using as few operators as possible
-
-Graph generators are configured using the builder pattern. The parallelism of generator
-operators can be set explicitly by calling `setParallelism(parallelism)`. Lowering the
-parallelism will reduce the allocation of memory and network buffers.
-
-Graph-specific configuration must be called first, then configuration common to all
-generators, and lastly the call to `generate()`. The following example configures a
-grid graph with two dimensions, configures the parallelism, and generates the graph.
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -72,14 +57,13 @@ val graph = new GridGraph(env.getJavaEnv).addDimension(2, wrapEndpoints).addDime
 </div>
 </div>
 
-## Circulant Graph
-
-A [circulant graph](http://mathworld.wolfram.com/CirculantGraph.html) is an
-[oriented graph](http://mathworld.wolfram.com/OrientedGraph.html) configured
-with one or more contiguous ranges of offsets. Edges connect integer vertex IDs
-whose difference equals a configured offset. The circulant graph with no offsets
-is the [empty graph](#empty-graph) and the graph with the maximum range is the
-[complete graph](#complete-graph).
+# #循环图
+[circulant graph](http://mathworld.wolfram.com/CirculantGraph.html)是一个
+(有向图)(http://mathworld.wolfram.com/OrientedGraph.html)配置
+具有一个或多个连续范围的偏移量。边连接整数顶点id
+其差值等于配置偏移量。没有偏移量的循环图
+是否[空图](#empty-graph)和具有最大范围的图是
+(完全图)(#完全图)。
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -108,9 +92,8 @@ val graph = new CirculantGraph(env.getJavaEnv, vertexCount).addRange(1, 2).gener
 </div>
 </div>
 
-## Complete Graph
-
-An undirected graph connecting every distinct pair of vertices.
+# #完全图
+连接每一对不同顶点的无向图。
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -172,10 +155,9 @@ val graph = new CompleteGraph(env.getJavaEnv, vertexCount).generate()
     <text x="51" y="199">4</text>
 </svg>
 
-## Cycle Graph
-
-An undirected graph where the set of edges form a single cycle by connecting
-each vertex to two adjacent vertices in a chained loop.
+# #循环图
+一种无向图，其中一组边通过连接形成一个循环
+每个顶点到链循环中的两个相邻顶点。
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -228,14 +210,11 @@ val graph = new CycleGraph(env.getJavaEnv, vertexCount).generate()
     <circle cx="51" cy="199" r="20" />
     <text x="51" y="199">4</text>
 </svg>
-
-## Echo Graph
-
-An [echo graph](http://mathworld.wolfram.com/EchoGraph.html) is a
-[circulant graph](#circulant-graph) with `n` vertices defined by the width of a
-single range of offsets centered at `n/2`. A vertex is connected to 'far'
-vertices, which connect to 'near' vertices, which connect to 'far' vertices, ....
-
+##回波图
+一个[echo graph](http://mathworld.wolfram.com/EchoGraph.html)是一个
+[循环图](#circulant-graph)，由a的宽度定义n个顶点
+以' n/2 '为中心的单范围偏移量。一个顶点连接到“远”
+连接到“近”顶点的顶点，连接到“远”顶点的顶点，…
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
 {% highlight java %}
@@ -263,10 +242,8 @@ val graph = new EchoGraph(env.getJavaEnv, vertexCount, vertexDegree).generate()
 {% endhighlight %}
 </div>
 </div>
-
-## Empty Graph
-
-A graph containing no edges.
+##空图
+没有边的图。
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -314,12 +291,11 @@ val graph = new EmptyGraph(env.getJavaEnv, vertexCount).generate()
     <text x="510" y="40">4</text>
 </svg>
 
-## Grid Graph
-
-An undirected graph connecting vertices in a regular tiling in one or more dimensions.
-Each dimension is configured separately. When the dimension size is at least three the
-endpoints are optionally connected by setting `wrapEndpoints`. Changing the following
-example to `addDimension(4, true)` would connect `0` to `3` and `4` to `7`.
+# #网格图
+一种无向图，在一个或多个维度中连接规则平铺中的顶点。
+每个维度都是单独配置的。当尺寸大小至少为3时
+端点通过设置“wrapendpoint”可选地连接。改变以下
+例如“addDimension(4, true)”将“0”连接到“3”，“4”连接到“7”。
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -386,11 +362,9 @@ val graph = new GridGraph(env.getJavaEnv).addDimension(2, wrapEndpoints).addDime
     <text x="510" y="160">7</text>
 </svg>
 
-## Hypercube Graph
-
-An undirected graph where edges form an `n`-dimensional hypercube. Each vertex
-in a hypercube connects to one other vertex in each dimension.
-
+# #超立方体图
+一种无向图，其中边形成一个' n '维超立方体。每个顶点
+在超立方体中，每个维度都与另一个顶点相连。
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
 {% highlight java %}
@@ -461,11 +435,10 @@ val graph = new HypercubeGraph(env.getJavaEnv, dimensions).generate()
     <text x="510" y="280">7</text>
 </svg>
 
-## Path Graph
-
-An undirected graph where the set of edges form a single path by connecting
-two `endpoint` vertices with degree `1` and all midpoint vertices with degree
-`2`. A path graph can be formed by removing a single edge from a cycle graph.
+# #路径图
+一种无向图，其中一组边通过连接形成一条路径
+两个度为1的端点顶点和所有度为1的中点顶点
+“2”。路径图可以通过从循环图中删除一条边来形成。
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -515,15 +488,13 @@ val graph = new PathGraph(env.getJavaEnv, vertexCount).generate()
     <text x="510" y="40">4</text>
 </svg>
 
-## RMat Graph
-
-A directed power-law multigraph generated using the
-[Recursive Matrix (R-Mat)](http://www.cs.cmu.edu/~christos/PUBLICATIONS/siam04.pdf) model.
-
-RMat is a stochastic generator configured with a source of randomness implementing the
-`RandomGenerableFactory` interface. Provided implementations are `JDKRandomGeneratorFactory`
-and `MersenneTwisterFactory`. These generate an initial sequence of random values which are
-then used as seeds for generating the edges.
+# # RMat图
+使用。生成的有向幂律多图
+[递归矩阵(R-Mat)](http://www.cs.cmu.edu/~christos/PUBLICATIONS/siam04.pdf)模型。
+RMat是一个随机生成器，配置了实现
+“RandomGenerableFactory”界面。提供的实现是“JDKRandomGeneratorFactory”
+和“MersenneTwisterFactory”。它们生成一个随机值的初始序列
+然后用作产生边缘的种子。
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -555,14 +526,13 @@ val graph = new RMatGraph(env.getJavaEnv, rnd, vertexCount, edgeCount).generate(
 </div>
 </div>
 
-The default RMat constants can be overridden as shown in the following example.
-The constants define the interdependence of bits from each generated edge's source
-and target labels. The RMat noise can be enabled and progressively perturbs the
-constants while generating each edge.
-
-The RMat generator can be configured to produce a simple graph by removing self-loops
-and duplicate edges. Symmetrization is performed either by a "clip-and-flip" throwing away
-the half matrix above the diagonal or a full "flip" preserving and mirroring all edges.
+默认的RMat常量可以被覆盖，如下面的例子所示。
+这些常量定义了来自每个生成边缘源的比特之间的相互依赖关系
+和目标标签。可以启用RMat噪声，并逐步干扰
+生成每条边时的常数。
+RMat生成器可以配置为通过删除自循环来生成一个简单的图
+和重复的边缘。对称可以通过“剪切-翻转”丢弃来执行
+对角线以上的半矩阵或全部“翻转”保留和镜像所有边
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -600,9 +570,8 @@ val graph = new RMatGraph(env.getJavaEnv, rnd, vertexCount, edgeCount).setConsta
 </div>
 </div>
 
-## Singleton Edge Graph
-
-An undirected graph containing isolated two-paths where every vertex has degree
+## 单边缘图
+   一个无向图，包含孤立的两条路径，其中每个顶点都有度数
 `1`.
 
 <div class="codetabs" markdown="1">
@@ -668,9 +637,7 @@ val graph = new SingletonEdgeGraph(env.getJavaEnv, vertexPairCount).generate()
 </svg>
 
 ## Star Graph
-
-An undirected graph containing a single central vertex connected to all other leaf vertices.
-
+   一个无向图，包含一个与所有其它叶顶点相连的中心顶点。
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
 {% highlight java %}
