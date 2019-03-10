@@ -1,79 +1,74 @@
 ---
-title: "FlinkML - Machine Learning for Flink"
-nav-id: ml
-nav-show_overview: true
-nav-title: Machine Learning
-nav-parent_id: libs
+题目:“FlinkML - Flink机器学习”
+nav-id:机器学习
+nav-show_overview:true
+nav-title:机器学习
+nav-parent_id:库
 nav-pos: 4
 ---
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
+< !
+授权给Apache软件基金会(ASF)
+或者更多贡献者许可协议。查看通知文件
+与此工作一起分发，以获取更多信息
+关于版权的所有权。ASF许可此文件
+在Apache许可下，2.0版
+“许可”);除非符合规定，否则您不能使用此文件
+的许可证。你可于
+http://www.apache.org/licenses/LICENSE-2.0
+除非适用法律要求或经书面同意，
+在授权下发布的软件是在
+无任何保证或条件
+善意的，明示的或暗示的。参见许可证
+管理权限和限制的特定语言
+根据许可证。
 -->
-
-FlinkML is the Machine Learning (ML) library for Flink. It is a new effort in the Flink community,
-with a growing list of algorithms and contributors. With FlinkML we aim to provide
-scalable ML algorithms, an intuitive API, and tools that help minimize glue code in end-to-end ML
-systems. You can see more details about our goals and where the library is headed in our [vision
-and roadmap here](https://cwiki.apache.org/confluence/display/FLINK/FlinkML%3A+Vision+and+Roadmap).
-
-* This will be replaced by the TOC
+FlinkML是Flink的机器学习(ML)库。这是Flink社区的一项新努力，
+越来越多的算法和贡献者。我们的目标是与FlinkML提供
+可伸缩的ML算法、直观的API和帮助最小化端到端ML中的粘合代码的工具
+系统。你可以看到更多关于我们目标的细节，以及图书馆在我们的愿景中的走向
+和路线图)(https://cwiki.apache.org/confluence/display/FLINK/FlinkML%3A +视觉+和+路线图)。
+*这将由TOC代替
 {:toc}
 
 ## Supported Algorithms
 
-FlinkML currently supports the following algorithms:
+FlinkML目前支持以下算法:
 
-### Supervised Learning
+### 监督式学习
 
 * [SVM using Communication efficient distributed dual coordinate ascent (CoCoA)](svm.html)
 * [Multiple linear regression](multiple_linear_regression.html)
 * [Optimization Framework](optimization.html)
 
-### Unsupervised Learning
+### 无监督式学习
 
 * [k-Nearest neighbors join](knn.html)
 
-### Data Preprocessing
+### 数据处理
 
 * [Polynomial Features](polynomial_features.html)
 * [Standard Scaler](standard_scaler.html)
 * [MinMax Scaler](min_max_scaler.html)
 
-### Recommendation
+### 推荐系统
 
 * [Alternating Least Squares (ALS)](als.html)
 
-### Outlier selection
+### 离群值选择
 
 * [Stochastic Outlier Selection (SOS)](sos.html)
 
-### Utilities
+### 公用程式
 
 * [Distance Metrics](distance_metrics.html)
 * [Cross Validation](cross_validation.html)
 
-## Getting Started
+## 开始
 
-You can check out our [quickstart guide](quickstart.html) for a comprehensive getting started
-example.
-
-If you want to jump right in, you have to [set up a Flink program]({{ site.baseurl }}/dev/linking_with_flink.html).
-Next, you have to add the FlinkML dependency to the `pom.xml` of your project.
+您可以查看我们的[快速入门指南](quickstart.html)来获得全面的入门知识
+的例子。
+如果您想直接进入，您必须[设置一个Flink程序]({{site。baseurl}} / dev / linking_with_flink.html)。
+接下来，您必须将FlinkML依赖项添加到“pom”中。项目的xml '。
 
 {% highlight xml %}
 <dependency>
@@ -83,18 +78,16 @@ Next, you have to add the FlinkML dependency to the `pom.xml` of your project.
 </dependency>
 {% endhighlight %}
 
-Note that FlinkML is currently not part of the binary distribution.
-See linking with it for cluster execution [here]({{site.baseurl}}/dev/linking.html).
-
-Now you can start solving your analysis task.
-The following code snippet shows how easy it is to train a multiple linear regression model.
-
+请注意，FlinkML目前不是二进制发行版的一部分。
+有关集群执行的链接[这里]({{site.baseurl}}/dev/link .html)。
+现在可以开始解决分析任务了。
+下面的代码片段显示了训练一个多元线性回归模型是多么容易。
 {% highlight scala %}
-// LabeledVector is a feature vector with a label (class or real value)
+// 带标签(类或实值)的特征向量
 val trainingData: DataSet[LabeledVector] = ...
 val testingData: DataSet[Vector] = ...
 
-// Alternatively, a Splitter is used to break up a DataSet into training and testing data.
+// 另一种方法是使用拆分器将数据集分解为培训和测试数据.
 val dataSet: DataSet[LabeledVector] = ...
 val trainTestData: DataSet[TrainTestDataSet] = Splitter.trainTestSplit(dataSet)
 val trainingData: DataSet[LabeledVector] = trainTestData.training
@@ -107,17 +100,16 @@ val mlr = MultipleLinearRegression()
 
 mlr.fit(trainingData)
 
-// The fitted model can now be used to make predictions
+// 拟合后的模型现在可以用来进行预测
 val predictions: DataSet[LabeledVector] = mlr.predict(testingData)
 {% endhighlight %}
 
-## Pipelines
+## 管道
 
-A key concept of FlinkML is its [scikit-learn](http://scikit-learn.org) inspired pipelining mechanism.
-It allows you to quickly build complex data analysis pipelines how they appear in every data scientist's daily work.
-An in-depth description of FlinkML's pipelines and their internal workings can be found [here](pipelines.html).
-
-The following example code shows how easy it is to set up an analysis pipeline with FlinkML.
+FlinkML的一个关键概念是其[scikit-learn](http://scikit-learn.org)启发的管道机制。
+它允许您快速构建复杂的数据分析管道，了解它们如何出现在每个数据科学家的日常工作中。
+关于FlinkML管道及其内部工作原理的深入描述[这里](pipelins .html)。
+下面的示例代码展示了使用FlinkML设置分析管道是多么容易。
 
 {% highlight scala %}
 val trainingData: DataSet[LabeledVector] = ...
@@ -127,22 +119,21 @@ val scaler = StandardScaler()
 val polyFeatures = PolynomialFeatures().setDegree(3)
 val mlr = MultipleLinearRegression()
 
-// Construct pipeline of standard scaler, polynomial features and multiple linear regression
+// 构建标准定标器、多项式特征和多元线性回归的流水线
 val pipeline = scaler.chainTransformer(polyFeatures).chainPredictor(mlr)
 
-// Train pipeline
+// 训练管道
 pipeline.fit(trainingData)
 
-// Calculate predictions
+// 计算预测
 val predictions: DataSet[LabeledVector] = pipeline.predict(testingData)
 {% endhighlight %}
+通过调用方法chainTransformer，可以将一个“Transformer”链接到另一个“Transformer”或一组链接的“Transformer”。
+如果要将一个“预测器”链接到一个“Transformer”或一组链接的“Transformer”，则必须调用方法“chainPredictor”。
 
-One can chain a `Transformer` to another `Transformer` or a set of chained `Transformers` by calling the method `chainTransformer`.
-If one wants to chain a `Predictor` to a `Transformer` or a set of chained `Transformers`, one has to call the method `chainPredictor`.
 
+## 如何构建
 
-## How to contribute
-
-The Flink community welcomes all contributors who want to get involved in the development of Flink and its libraries.
-In order to get quickly started with contributing to FlinkML, please read our official
+Flink社区欢迎所有希望参与开发Flink及其库的贡献者。
+为了快速开始对FlinkML的贡献，请阅读我们的官方文章
 [contribution guide]({{site.baseurl}}/dev/libs/ml/contribution_guide.html).
